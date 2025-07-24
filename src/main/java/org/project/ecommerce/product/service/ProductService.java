@@ -33,7 +33,7 @@ public class ProductService {
 
     private final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    @CachePut(value = "productCache", key = "#result.id")
+    @CachePut(value = "productCache", key = "#result.id", unless = "#result == null")
     public ProductResponseDto createProduct(ProductRequestDto request, MultipartFile imageFile) {
         if (request == null) {
             return null;
@@ -166,7 +166,7 @@ public class ProductService {
         return true;
     }
 
-    @CachePut(value = "productCache", key = "#id")
+    @CachePut(value = "productCache", key = "#id", unless = "#result == null")
     public ProductResponseDto updateProduct(Long id, ProductRequestDto request) {
         Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isPresent()) {
@@ -202,7 +202,7 @@ public class ProductService {
                 .toList();
     }
 
-    @Cacheable(value = "productCache", key = "#id")
+    @Cacheable(value = "productCache", key = "#id", unless = "#result == null")
     public ProductResponseDto getProductById(Long id) {
         Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isPresent()) {

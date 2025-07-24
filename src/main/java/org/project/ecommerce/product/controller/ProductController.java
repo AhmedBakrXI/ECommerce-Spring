@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,7 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ProductResponseDto> createProduct(@RequestPart("request") String requestAsJsonString,
             @RequestPart("image") MultipartFile image) {
         if (requestAsJsonString == null || image == null || image.isEmpty()) {
@@ -64,6 +66,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         boolean isDeleted = productService.removeProduct(id);
         if (!isDeleted) {
@@ -73,6 +76,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id,
                                                             @RequestBody ProductRequestDto request) {
         ProductResponseDto response = productService.updateProduct(id, request);
