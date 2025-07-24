@@ -6,7 +6,12 @@ import org.project.ecommerce.product.dto.ProductResponseDto;
 import org.project.ecommerce.product.model.*;
 import org.project.ecommerce.product.repository.ProductRepository;
 import org.project.ecommerce.product.service.files.ImageHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -18,15 +23,17 @@ import java.util.Optional;
 @Service
 public class ProductService {
     @Autowired
-    ImageHandler imageHandler;
+    private ImageHandler imageHandler;
 
     @Autowired
-    ProductRepository productRepository;
+    private ProductRepository productRepository;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
+    private final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
+    @CachePut(value = "productCache", key = "#result.id")
     public ProductResponseDto createProduct(ProductRequestDto request, MultipartFile imageFile) {
         if (request == null) {
             return null;
@@ -50,7 +57,7 @@ public class ProductService {
             String imagePath = imageHandler.saveImage(request.getName(), imageFile);
             product.setImageName(imagePath);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
             return null; // Handle image saving failure
         }
         product = productRepository.save(product);
@@ -118,7 +125,7 @@ public class ProductService {
         try {
             return objectMapper.readValue(json, ProductRequestDto.class);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
             return null; // Handle JSON parsing failure
         }
     }
@@ -142,6 +149,7 @@ public class ProductService {
         }
     }
 
+    @CacheEvict(value = "productCache", key = "#id")
     public boolean removeProduct(Long id) {
         Optional<Product> product = productRepository.findById(id);
         if (product.isEmpty()) {
@@ -158,6 +166,7 @@ public class ProductService {
         return true;
     }
 
+    @CachePut(value = "productCache", key = "#id")
     public ProductResponseDto updateProduct(Long id, ProductRequestDto request) {
         Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isPresent()) {
@@ -193,6 +202,7 @@ public class ProductService {
                 .toList();
     }
 
+    @Cacheable(value = "productCache", key = "#id")
     public ProductResponseDto getProductById(Long id) {
         Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isPresent()) {

@@ -20,8 +20,8 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductResponseDto> createProduct(@RequestParam("request") String requestAsJsonString,
-            @RequestParam("image") MultipartFile image) {
+    public ResponseEntity<ProductResponseDto> createProduct(@RequestPart("request") String requestAsJsonString,
+            @RequestPart("image") MultipartFile image) {
         if (requestAsJsonString == null || image == null || image.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }

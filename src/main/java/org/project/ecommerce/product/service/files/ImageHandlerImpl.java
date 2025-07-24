@@ -7,13 +7,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 @Component
 public class ImageHandlerImpl implements ImageHandler {
-    Logger logger = Logger.getLogger(ImageHandlerImpl.class.getName());
+    private final Logger logger = Logger.getLogger(ImageHandlerImpl.class.getName());
 
     @Value("${spring.application.ecommerce.image-directory}")
     private String imageDir;
@@ -26,7 +25,7 @@ public class ImageHandlerImpl implements ImageHandler {
      * @return the path of the saved image, or null if saving failed
      */
     @Override
-    public String saveImage(String imageName, MultipartFile file) throws IOException {
+    public String saveImage(String imageName, MultipartFile file) {
         String fileType = file.getContentType();
         if (!"image/png".equalsIgnoreCase(fileType) &&
                 !"image/jpeg".equalsIgnoreCase(fileType)) {
@@ -37,11 +36,16 @@ public class ImageHandlerImpl implements ImageHandler {
         String imagePath = imageDir + relativePath;
         File imageFile = new File(imagePath);
         try {
+            // Ensure the directory exists
+            File dir = new File(imageDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
             file.transferTo(imageFile);
             // Return relative path for the image
             return relativePath;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warning(e.getMessage());
             return null;
         }
     }
