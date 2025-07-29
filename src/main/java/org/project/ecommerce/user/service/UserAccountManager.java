@@ -1,17 +1,21 @@
-package org.project.ecommerce.user.controller;
+package org.project.ecommerce.user.service;
 
+import org.project.ecommerce.user.dto.ChangePasswordRequest;
+import org.project.ecommerce.user.dto.CreateAccountRequest;
 import org.project.ecommerce.user.enums.UserRole;
+import org.project.ecommerce.user.exceptions.UsernameExistsException;
 import org.project.ecommerce.user.model.UserModel;
 import org.project.ecommerce.user.repository.UserModelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserAccountManager implements UserDetailsManager {
@@ -21,10 +25,20 @@ public class UserAccountManager implements UserDetailsManager {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    public void createUser(CreateAccountRequest request) {
+        createUser(
+                UserModel.builder()
+                        .username(request.getUsername())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .role(UserRole.CUSTOMER)
+                        .build()
+        );
+    }
+
     @Override
     public void createUser(UserDetails user) {
         if (userModelRepository.existsByUsername(user.getUsername())) {
-            throw new IllegalArgumentException("User already exists with username: " + user.getUsername());
+            throw new UsernameExistsException("User already exists with username: " + user.getUsername());
         }
         userModelRepository.save(convertToUserModel(user));
     }
@@ -59,6 +73,22 @@ public class UserAccountManager implements UserDetailsManager {
         }
     }
 
+    public void changePassword(ChangePasswordRequest changePasswordRequest) {
+        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmPassword())) {
+            throw new IllegalArgumentException("Passwords do not match.");
+        }
+        final UserModel userModel = userModelRepository.findByUsername(changePasswordRequest.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + changePasswordRequest.getUsername()));
+
+        // Current Password Validation
+        final String currentPasswordEncoded = passwordEncoder.encode(changePasswordRequest.getCurrentPassword());
+        if (!passwordEncoder.matches(currentPasswordEncoded, userModel.getPassword())) {
+            throw new IllegalArgumentException("Passwords do not match.");
+        }
+        userModel.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+        userModelRepository.save(userModel);
+    }
+
     @Override
     public boolean userExists(String username) {
         return userModelRepository.existsByUsername(username);
@@ -66,20 +96,22 @@ public class UserAccountManager implements UserDetailsManager {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserModel userModel = userModelRepository.findByUsername(username)
+        return userModelRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        return User.withUsername(userModel.getUsername())
-                .password(passwordEncoder.encode(userModel.getPassword()))
-                .roles(userModel.getRole().getRoleAsString())
-                .build();
+    }
+
+    public Optional<UserModel> upgradeUserRole(String username, UserRole userRole) {
+        Optional<UserModel> optionalUser = userModelRepository.findByUsername(username);
+        if (optionalUser.isPresent()) {
+            UserModel userModel = optionalUser.get();
+            userModel.setRole(userRole);
+            return Optional.of(userModelRepository.save(userModel));
+        }
+        return Optional.empty();
     }
 
     private UserModel convertToUserModel(UserDetails userDetails) {
-        return UserModel.builder()
-                .username(userDetails.getUsername())
-                .password(passwordEncoder.encode(userDetails.getPassword()))
-                .role(getUserRole(userDetails))
-                .build();
+        return (UserModel) userDetails;
     }
 
     private UserRole getUserRole(UserDetails userDetails) {
