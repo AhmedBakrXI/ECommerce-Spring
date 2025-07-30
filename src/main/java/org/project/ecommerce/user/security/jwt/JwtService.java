@@ -54,7 +54,7 @@ public class JwtService {
         if (!isUsernameAsExpected) {
             return false;
         }
-        return jwtUtils.isTokenExpired(token);
+        return !jwtUtils.isTokenExpired(token);
     }
 
     public String extractUsernameFromToken(final String token) {

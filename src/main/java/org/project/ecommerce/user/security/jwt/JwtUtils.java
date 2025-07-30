@@ -54,7 +54,7 @@ public class JwtUtils {
         return Jwts.builder()
                 .claims(claims)
                 .subject(username)
-                .issuedAt(Date.from(Instant.now()))
+                .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + tokenExpiration))
                 .signWith(this.privateKey)
                 .compact();
