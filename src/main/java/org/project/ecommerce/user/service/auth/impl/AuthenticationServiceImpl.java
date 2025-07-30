@@ -1,6 +1,7 @@
 package org.project.ecommerce.user.service.auth.impl;
 
 import org.project.ecommerce.user.dto.auth.request.AuthenticationRequest;
+import org.project.ecommerce.user.dto.auth.request.RefreshRequest;
 import org.project.ecommerce.user.dto.auth.response.AuthenticationResponse;
 import org.project.ecommerce.user.security.jwt.JwtService;
 import org.project.ecommerce.user.service.auth.AuthenticationService;
@@ -38,7 +39,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public AuthenticationResponse refresh(AuthenticationRequest request) {
-        return null;
+    public AuthenticationResponse refresh(RefreshRequest request) {
+        final String newAccessToken = jwtService.refreshAccessToken(request.getRefreshToken());
+        final String tokenType = "Bearer";
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(request.getRefreshToken())
+                .tokenType(tokenType)
+                .build();
     }
 }

@@ -4,6 +4,7 @@ import org.project.ecommerce.user.dto.CreateAccountRequest;
 import org.project.ecommerce.user.dto.auth.request.AuthenticationRequest;
 import org.project.ecommerce.user.dto.UpgradeRoleRequest;
 import org.project.ecommerce.user.dto.UserResponseDto;
+import org.project.ecommerce.user.dto.auth.request.RefreshRequest;
 import org.project.ecommerce.user.dto.auth.response.AuthenticationResponse;
 import org.project.ecommerce.user.enums.UserResponseCode;
 import org.project.ecommerce.user.exceptions.UsernameExistsException;
@@ -79,6 +80,15 @@ public class UserController {
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
         try {
             return ResponseEntity.ok(authenticationService.login(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshRequest request) {
+        try {
+            return ResponseEntity.ok(authenticationService.refresh(request));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
