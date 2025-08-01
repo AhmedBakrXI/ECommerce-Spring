@@ -23,4 +23,6 @@ public interface UserModelRepository extends JpaRepository<UserModel, Long> {
      * @return true if a user with the given username exists, false otherwise
      */
     Boolean existsByUsername(String username);
+
+    Optional<UserModel> findByEmail(String email);
 }
