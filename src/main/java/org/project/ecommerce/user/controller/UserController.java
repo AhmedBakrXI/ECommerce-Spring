@@ -11,6 +11,7 @@ import org.project.ecommerce.user.exceptions.UsernameExistsException;
 import org.project.ecommerce.user.model.UserModel;
 import org.project.ecommerce.user.service.UserAccountManager;
 import org.project.ecommerce.user.service.auth.AuthenticationService;
+import org.project.ecommerce.user.service.verification.VerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ public class UserController {
 
     @Autowired
     private AuthenticationService authenticationService;
+
+    @Autowired
+    private VerificationService verificationService;
 
     @PutMapping("/upgrade-role")
     @PreAuthorize("hasRole('OWNER')")
@@ -50,10 +54,12 @@ public class UserController {
     }
 
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     public ResponseEntity<UserResponseDto> createUser(@RequestBody CreateAccountRequest request) {
         try {
-            userAccountManager.createUser(request);
+            UserModel user = userAccountManager.createUser(request);
+            String token = verificationService.createVerificationToken(user.getUsername());
+            verificationService.sendTokenToUser(user.getEmail(), token);
             return ResponseEntity.ok(
                     UserResponseDto.builder()
                             .username(request.getUsername())

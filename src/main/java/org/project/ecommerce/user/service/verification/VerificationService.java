@@ -30,6 +30,7 @@ public class VerificationService {
             verificationTokenRepository.delete(verificationToken.get());
             UserModel user = verificationToken.get().getUser();
             user.setIsEnabled(true);
+            userModelRepository.save(user);
             return true;
         }
         return false;
@@ -54,17 +55,17 @@ public class VerificationService {
     }
 
     public String requestNewToken(String userEmail) {
-        Optional<VerificationToken> existingToken = verificationTokenRepository.findByUser_Email(userEmail);
         Optional<UserModel> existingUser = userModelRepository.findByEmail(userEmail);
+        // There exists no user by this email
+        if (existingUser.isEmpty() || existingUser.get().isEnabled()) {
+            return null;
+        }
+
+        Optional<VerificationToken> existingToken = verificationTokenRepository.findByUser_Email(userEmail);
         if (existingToken.isEmpty()) {
             // There exists a user with no token
             return existingUser.map(userModel -> createVerificationToken(userModel.getUsername()))
                     .orElse(null);
-        }
-
-        // There exists no user by this email
-        if (existingUser.isEmpty()) {
-            return null;
         }
 
         // There exists User and Token

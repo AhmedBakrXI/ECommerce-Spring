@@ -25,14 +25,16 @@ public class UserAccountManager implements UserDetailsManager {
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    public void createUser(CreateAccountRequest request) {
-        createUser(
-                UserModel.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(UserRole.CUSTOMER)
-                        .build()
-        );
+    public UserModel createUser(CreateAccountRequest request) {
+        UserModel userModel = UserModel.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .isEnabled(false)
+                .role(UserRole.CUSTOMER)
+                .build();
+        createUser(userModel);
+        return userModel;
     }
 
     @Override
