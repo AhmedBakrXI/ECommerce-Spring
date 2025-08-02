@@ -1,6 +1,5 @@
 package org.project.ecommerce.email.service;
 
-import org.project.ecommerce.user.model.VerificationToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
